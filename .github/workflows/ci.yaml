@@ -1,31 +1,23 @@
-name: CI
+name: CD
 
 on:
-  pull_request:
+  push:
     branches:
       - develop
 
 jobs:
-  build-and-push:
+  deploy:
     runs-on: ubuntu-latest
+    environment: development
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Docker Login
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build image
+      - name: Trigger Render Deploy
         run: |
-          docker build \
-            -t ${{ secrets.DOCKERHUB_USERNAME }}/taskflow:latest \
-            -t ${{ secrets.DOCKERHUB_USERNAME }}/taskflow:${{ github.sha }} .
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
 
-      - name: Push image
+      - name: Confirm Deployment
         run: |
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/taskflow:latest
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/taskflow:${{ github.sha }}
+          echo "Deployment triggered successfully at $(date -u)"
